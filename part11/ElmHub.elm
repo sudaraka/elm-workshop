@@ -24,11 +24,11 @@ searchResultDecoder =
 
 
 type alias Model =
-    -- TODO add tableState : Table.State to the Model
     { query : String
     , results : List SearchResult
     , errorMessage : Maybe String
     , options : SearchOptions
+    , tableState : Table.State
     }
 
 
@@ -49,7 +49,6 @@ type alias SearchResult =
 
 initialModel : Model
 initialModel =
-    -- TODO initialize the Model's tableState to (Table.initialSort "Stars")
     { query = "tutorial"
     , results = []
     , errorMessage = Nothing
@@ -59,6 +58,7 @@ initialModel =
         , searchIn = "name"
         , userFilter = ""
         }
+    , tableState = Table.initialSort "Stars"
     }
 
 
@@ -89,7 +89,7 @@ type Msg
     | DeleteById Int
     | HandleSearchResponse (List SearchResult)
     | HandleSearchError (Maybe String)
-      -- TODO add a new constructor: SetTableState Table.State
+    | SetTableState Table.State
     | DoNothing
 
 
@@ -122,8 +122,9 @@ update msg model =
             in
                 ( newModel, Cmd.none )
 
-        -- TODO add a new branch for SetTableState
-        -- which records the new tableState in the Model.
+        SetTableState newState ->
+            ( { model | tableState = newState }, Cmd.none )
+
         DoNothing ->
             ( model, Cmd.none )
 
@@ -137,9 +138,7 @@ tableConfig : Table.Config SearchResult Msg
 tableConfig =
     Table.config
         { toId = .id >> toString
-        , toMsg =
-            -- TODO have the table use SetTableState for its toMsg instead of:
-            (\tableState -> DoNothing)
+        , toMsg = SetTableState
         , columns = [ starsColumn, nameColumn ]
         }
 
@@ -188,8 +187,7 @@ view model =
     let
         currentTableState : Table.State
         currentTableState =
-            -- TODO have this use the actual current table state
-            Table.initialSort "Stars"
+            model.tableState
     in
         div [ class "content" ]
             [ header []
@@ -204,8 +202,7 @@ view model =
                     ]
                 ]
             , viewErrorMessage model.errorMessage
-              -- TODO have this use model.results instead of []
-            , Table.view tableConfig currentTableState []
+            , Table.view tableConfig currentTableState model.results
             ]
 
 
